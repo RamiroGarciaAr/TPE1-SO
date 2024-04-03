@@ -1,25 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/select.h>
-
-#define MIN_ARGS_REQUIRED 2
-#define SLAVES 5
-#define INITIAL_FILES_PER_SLAVE 2 
-#define MD5_HASH 32
-#define FORK_ERROR -1
-
-#define READ 0
-#define WRITE 1
-
-typedef struct {
-    int pidNum;
-    int from_App_to_Slave_Pipe[2];
-    int from_Slave_to_App_Pipe[2];
-} SlaveData;
+#include "app.h"
 
 int main(int argc, char * argv[]){
 
@@ -33,12 +12,18 @@ int main(int argc, char * argv[]){
     size_t slaves = (SLAVES > total_files) ? total_files : SLAVES;
     size_t files_per_slave = ((slaves * INITIAL_FILES_PER_SLAVE) > total_files) ? total_files/slaves : INITIAL_FILES_PER_SLAVE;
     size_t reminding_files = total_files - (slaves * files_per_slave);
+    size_t files_read = 0;
     
     //Contiene todos los hash de los archivos
-    size_t results_dim = (MD5_HASH + 1) * total_files;
+    size_t results_dim = (MD5_HASH_FILES + 1 + TEXTO + SLAVE_PID) * total_files;
     char results[results_dim];
 
     SlaveData slave[slaves];
+
+    fd_set readFromSlaves;
+    FD_ZERO(&readFromSlaves);
+
+    int maxFd = 0;
     
     for(int i = 0; i < slaves; i++){
 
@@ -74,16 +59,89 @@ int main(int argc, char * argv[]){
         else{
             close(slave[i].from_App_to_Slave_Pipe[READ]);
             close(slave[i].from_Slave_to_App_Pipe[WRITE]);
-
-            dup2(slave[i].from_App_to_Slave_Pipe[WRITE], STDOUT_FILENO);
-            dup2(slave[i].from_Slave_to_App_Pipe[READ], STDIN_FILENO);
         }
+
+        
+        FD_SET(slave[i].from_Slave_to_App_Pipe[READ], &readFromSlaves);
+            if (slave[i].from_Slave_to_App_Pipe[READ] > maxFd) {
+                maxFd = slave[i].from_Slave_to_App_Pipe[READ];
+            }
     }
     
+    FILE * result_file = fopen("resultado.txt", "w");
+    if (result_file == NULL) {
+        perror("fopen");
+        exit(EXIT_FAILURE);
+    }
+
+    distributeFiles(slave, argv, total_files, slaves, files_per_slave, 0); // Primera distribución de archivos
+
+    while (files_read < total_files) {
+        fd_set readSet = readFromSlaves;
+        int selectResult = select(maxFd + 1, &readSet, NULL, NULL, NULL);
+        if (selectResult == -1) {
+            perror("select");
+            exit(EXIT_FAILURE);
+        }
+
+        for (int i = 0; i < slaves; i++) {
+            if (FD_ISSET(slave[i].from_Slave_to_App_Pipe[0], &readSet)) {
+                int bytesRead = read(slave[i].from_Slave_to_App_Pipe[0], results, sizeof(results));
+                if (results[bytesRead - 1] == '\n') {
+                    results[bytesRead - 1] = '\0';
+                }
+                if (bytesRead > 0) {
+                    fprintf(result_file, "%s\n", results);
+                    files_read++;
+                    if (reminding_files > 0) {
+                        distributeFiles(slave, argv, total_files, slaves, files_per_slave, i);
+                        reminding_files--;
+                    }
+                }
+            }
+        }
+    }
+
+    fclose(result_file);
+    close_descriptors(slave, slaves);
     
-
-
-
     return 0;
+
 }
 
+void distributeFiles(SlaveData slaves[],char *argv[], int total_files, int numSlaves, int files_per_slave, int slaveSet){
+
+    static int filesSend = 0;
+
+    if(filesSend == 0){
+        for (int i = 0; i < numSlaves; i++) {
+            for (int j = 0; j < files_per_slave; j++) {
+                if (filesSend >= total_files) {
+                    return; // Todos los archivos han sido distribuidos
+                }
+                write(slaves[i].from_App_to_Slave_Pipe[WRITE], argv[filesSend + 1], strlen(argv[filesSend + 1]));
+                write(slaves[i].from_App_to_Slave_Pipe[WRITE], "\n", 1);
+                filesSend++;
+            }
+        }
+    }
+
+    else{
+        write(slaves[slaveSet].from_App_to_Slave_Pipe[1], argv[filesSend + 1], strlen(argv[filesSend + 1]));
+        write(slaves[slaveSet].from_App_to_Slave_Pipe[1], "\n", 1);
+        filesSend++;
+    }
+
+}
+
+void close_descriptors(SlaveData slave[], size_t slaves){
+
+    for(int i = 0; i < slaves; i++){
+        for(int j = 0; j < FD_DIM; j++){
+            close(slave[i].from_App_to_Slave_Pipe[j]);
+            close(slave[i].from_Slave_to_App_Pipe[j]);
+        }
+    }
+
+    return;
+}
