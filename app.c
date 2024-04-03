@@ -9,7 +9,7 @@
 #define MIN_ARGS_REQUIRED 2
 #define SLAVES 5
 #define INITIAL_FILES_PER_SLAVE 2 
-#define MD5_HASH 33
+#define MD5_HASH 32
 #define FORK_ERROR -1
 
 #define READ 0
@@ -35,7 +35,8 @@ int main(int argc, char * argv[]){
     size_t reminding_files = total_files - (slaves * files_per_slave);
     
     //Contiene todos los hash de los archivos
-    char results[MD5_HASH * total_files];
+    size_t results_dim = (MD5_HASH + 1) * total_files;
+    char results[results_dim];
 
     SlaveData slave[slaves];
     
