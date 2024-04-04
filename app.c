@@ -1,4 +1,5 @@
 #include "app.h"
+#include "shm.h"
 
 int main(int argc, char * argv[]){
 
@@ -74,6 +75,8 @@ int main(int argc, char * argv[]){
         exit(EXIT_FAILURE);
     }
 
+    ShareMemory shm_data = CreateSHM(results_dim);
+
     distributeFiles(slave, argv, total_files, slaves, files_per_slave, 0); // Primera distribución de archivos
 
     while (files_read < total_files) {
@@ -92,6 +95,8 @@ int main(int argc, char * argv[]){
                 }
                 if (bytesRead > 0) {
                     fprintf(result_file, "%s\n", results);
+                    shm_write(shm_data, results);
+                    //shm_read(shm_data);
                     files_read++;
                     if (reminding_files > 0) {
                         distributeFiles(slave, argv, total_files, slaves, files_per_slave, i);
@@ -104,9 +109,8 @@ int main(int argc, char * argv[]){
 
     fclose(result_file);
     close_descriptors(slave, slaves);
-    
+    close_shm(shm_data);
     return 0;
-
 }
 
 void distributeFiles(SlaveData slaves[],char *argv[], int total_files, int numSlaves, int files_per_slave, int slaveSet){

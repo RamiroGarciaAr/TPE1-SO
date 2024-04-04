@@ -3,7 +3,7 @@
 int main() {
     
     ssize_t nbytes;
-    char inputBuffer[4096];  // Tamaño suficientemente grande para almacenar la entrada
+    char inputBuffer[INPUT_BUFFER_SIZE];  // Tamaño suficientemente grande para almacenar la entrada
 
     while ((nbytes = read(STDIN_FILENO, inputBuffer, sizeof(inputBuffer))) > 0) {
         // Reemplazamos el salto de línea final con un carácter nulo
@@ -14,7 +14,7 @@ int main() {
         char * token = strtok(inputBuffer, "\n");  // Dividir la entrada en tokens por espacios en blanco
 
         while (token != NULL) {
-            char ansBuffer[256] = "";  // Buffer para almacenar el resultado MD5
+            char ansBuffer[MD5_RESULT_SIZE] = "";  // Buffer para almacenar el resultado MD5
             if (calculateMd5(token, ansBuffer) == 0) {
                 size_t output_dim = write(STDOUT_FILENO, ansBuffer, strlen(ansBuffer));
                 if (output_dim == -1) {
@@ -33,7 +33,7 @@ int main() {
 
 int calculateMd5(char *filePath, char *ansBuffer) {
     int pid = getpid();
-    char mypid[10];
+    char mypid[PID_SIZE];
     sprintf(mypid, "%d", pid);
 
     char command[300];
@@ -46,7 +46,7 @@ int calculateMd5(char *filePath, char *ansBuffer) {
         return 1;
     }
 
-    char buffer[560];
+    char buffer[BUFFER_SIZE];
     size_t bytesRead = 0;
 
     while (fgets(buffer, sizeof(buffer), fp) != NULL) {
