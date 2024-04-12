@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "cstdlib": "c",
-        "shm.h": "c"
-    }
+        "shm.h": "c",
+        "view.h": "c"
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }

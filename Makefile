@@ -1,12 +1,15 @@
 CC = gcc
 CFLAGS = -Wall 
-all: app slave #view
+all: app slave view
 
 app: app.c shm.h
-	$(CC) $(CFLAGS) -std=c99 -o app app.c app.h shm.c -lrt -pthread -D_XOPEN_SOURCE=500
+	$(CC) $(CFLAGS) -std=c99 -o app app.c shm.c -lrt -pthread -D_XOPEN_SOURCE=500 
 
 slave: slave.c
 	$(CC) $(CFLAGS) -o slave slave.c slave.h
 
+view: view.c shm.h
+	$(CC) $(CFLAGS) -std=c99 -o view view.c shm.c -lrt -pthread -D_XOPEN_SOURCE=500 
+
 clean:
-	rm -f app slave resultado.txt
+	rm -f app slave view resultado.txt

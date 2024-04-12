@@ -16,8 +16,9 @@ int main(int argc, char * argv[]){
     size_t files_read = 0;
     
     //Contiene todos los hash de los archivos
-    size_t results_dim = (MD5_HASH_FILES + 1 + TEXTO + SLAVE_PID) * total_files;
-    char results[results_dim];
+    int results_dim = LINE * total_files;
+    char resultLine[LINE];
+    //char results[results_dim];
 
     SlaveData slave[slaves];
 
@@ -48,8 +49,9 @@ int main(int argc, char * argv[]){
             
             //Redirigimos la salida
             dup2(slave[i].from_Slave_to_App_Pipe[WRITE], STDOUT_FILENO);
+            close(slave[i].from_Slave_to_App_Pipe[WRITE]);
             dup2(slave[i].from_App_to_Slave_Pipe[READ], STDIN_FILENO);
-            
+            close(slave[i].from_App_to_Slave_Pipe[READ]);
             execve("./slave", argv, NULL);
 
             //En caso de que no se haya realizado el exceve por error
@@ -76,6 +78,9 @@ int main(int argc, char * argv[]){
     }
 
     ShareMemory shm_data = CreateSHM(results_dim);
+    printf("%d", results_dim); // Imprime el peso de la Shm que necesita view para conectarse
+    fflush(stdout);
+    sleep(2);
 
     distributeFiles(slave, argv, total_files, slaves, files_per_slave, 0); // Primera distribución de archivos
 
@@ -89,13 +94,13 @@ int main(int argc, char * argv[]){
 
         for (int i = 0; i < slaves; i++) {
             if (FD_ISSET(slave[i].from_Slave_to_App_Pipe[0], &readSet)) {
-                int bytesRead = read(slave[i].from_Slave_to_App_Pipe[0], results, sizeof(results));
-                if (results[bytesRead - 1] == '\n') {
-                    results[bytesRead - 1] = '\0';
+                int bytesRead = read(slave[i].from_Slave_to_App_Pipe[0], resultLine, sizeof(resultLine));
+                if (resultLine[bytesRead - 1] == '\n') {
+                    resultLine[bytesRead - 1] = '\0';
                 }
                 if (bytesRead > 0) {
-                    fprintf(result_file, "%s\n", results);
-                    shm_write(shm_data, results);
+                    fprintf(result_file, "%s\n", resultLine);
+                    shm_write(shm_data, resultLine);
                     //shm_read(shm_data);
                     files_read++;
                     if (reminding_files > 0) {
@@ -109,7 +114,7 @@ int main(int argc, char * argv[]){
 
     fclose(result_file);
     close_descriptors(slave, slaves);
-    close_shm(shm_data);
+    destroy_shm(shm_data);
     return 0;
 }
 
