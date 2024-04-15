@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "app.h"
 #include "shm.h"
 
@@ -100,15 +102,14 @@ int main(int argc, char * argv[]){
         }
 
         for (int i = 0; i < slaves; i++) {
-            if (FD_ISSET(slave[i].from_Slave_to_App_Pipe[0], &readSet)) {
-                int bytesRead = read(slave[i].from_Slave_to_App_Pipe[0], resultLine, sizeof(resultLine));
-                if (resultLine[bytesRead - 1] == '\n') {
+            if (FD_ISSET(slave[i].from_Slave_to_App_Pipe[READ], &readSet)) {
+                int bytesRead = read(slave[i].from_Slave_to_App_Pipe[READ], resultLine, sizeof(resultLine));
+                if (bytesRead > 0 && resultLine[bytesRead - 1] == '\n') {
                     resultLine[bytesRead - 1] = '\0';
                 }
                 if (bytesRead > 0) {
                     fprintf(result_file, "%s\n", resultLine);
                     shm_write(shm_data, resultLine);
-                    //shm_read(shm_data);
                     files_read++;
                     if (reminding_files > 0) {
                         distributeFiles(slave, argv, total_files, slaves, files_per_slave, i);
@@ -144,8 +145,8 @@ void distributeFiles(SlaveData slaves[],char *argv[], int total_files, int numSl
     }
 
     else{
-        write(slaves[slaveSet].from_App_to_Slave_Pipe[1], argv[filesSend + 1], strlen(argv[filesSend + 1]));
-        write(slaves[slaveSet].from_App_to_Slave_Pipe[1], "\n", 1);
+        write(slaves[slaveSet].from_App_to_Slave_Pipe[WRITE], argv[filesSend + 1], strlen(argv[filesSend + 1]));
+        write(slaves[slaveSet].from_App_to_Slave_Pipe[WRITE], "\n", 1);
         filesSend++;
     }
 
@@ -155,8 +156,7 @@ void close_descriptors(SlaveData slave[], size_t slaves){
 
     for(int i = 0; i < slaves; i++) {
         for(int j = 0; j < FD_DIM; j++) {
-            if(!(j == 0)){
-                if(!(i>0 && j==1))
+            if(i <= 0 && j != 0 ){
                 close(slave[i].from_App_to_Slave_Pipe[j]);
             }
             close(slave[i].from_Slave_to_App_Pipe[j]);

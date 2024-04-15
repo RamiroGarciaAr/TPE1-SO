@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "shm.h"
 
 ShareMemory CreateSHM(size_t file_size) {
@@ -176,6 +178,6 @@ void destroy_shm(ShareMemory shm_data){
     safe_munmap(shm_data.shm_ptr, shm_data.file_size, shm_data.fd, shm_data.content_sem);
     sem_close(shm_data.content_sem);
     sem_unlink(CONTENT_SEM_NAME);
-    close(shm_data.fd);
+    //close(shm_data.fd);
     shm_unlink(SHM_NAME);
 }
