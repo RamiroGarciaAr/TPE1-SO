@@ -11,7 +11,7 @@ int main() {
             inputBuffer[nbytes - 1] = '\0';
         }
 
-        char * token = strtok(inputBuffer, "\n");  // Dividir la entrada en tokens por espacios en blanco
+        char * token = strtok(inputBuffer, "\n");  // Dividir la entrada en tokens por saltos de línea
 
         while (token != NULL) {
             char ansBuffer[MD5_RESULT_SIZE] = "";  // Buffer para almacenar el resultado MD5
@@ -32,13 +32,13 @@ int main() {
 }
 
 int calculateMd5(char *filePath, char *ansBuffer) {
+
     int pid = getpid();
     char mypid[PID_SIZE];
     sprintf(mypid, "%d", pid);
 
-    char command[300];
+    char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "md5sum %s", filePath);
-    // printf("command: %s\n", command);
 
     FILE *fp = popen(command, "r");
     if (fp == NULL) {

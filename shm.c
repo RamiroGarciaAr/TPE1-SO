@@ -1,15 +1,12 @@
 #include "shm.h"
 
-ShareMemory CreateSHM(int file_size) {
+ShareMemory CreateSHM(size_t file_size) {
 
     ShareMemory shm_data;
 
     // Crear e inicializar el semaforos
     // Me indica si hay contenido
     sem_t * content_sem = safe_sem_open(CONTENT_SEM_NAME, O_CREAT, SEM_MODE, 0);
-
-    //Me indica si se puede leer o escribir
-    //sem_t * read_write_sem = safe_sem_open(READ_WRITE_SEM_NAME, O_CREAT, SEM_MODE, 1);
     
     int fd = safe_shm_open(SHM_NAME, O_RDWR | O_CREAT, SHM_MODE, content_sem);
 
@@ -22,21 +19,20 @@ ShareMemory CreateSHM(int file_size) {
     shm_data.shm_ptr = ptr;
     shm_data.fd = fd;
     shm_data.content_sem = content_sem;
-    //shm_data.read_write_sem = read_write_sem;
     shm_data.file_size = file_size;
 
     return shm_data;
 }
 
-ShareMemory ConnectSHM(int file_size) {
+ShareMemory ConnectSHM(size_t file_size) {
 
     ShareMemory shm_data;
 
     // Conexión al semáforo existente
     sem_t *content_sem = sem_open(CONTENT_SEM_NAME, 0); // Abre el semáforo existente
     if (content_sem == SEM_FAILED) {
-        printf("sem_open %s",strerror(errno));
-        //exit(EXIT_FAILURE);
+        perror("sem_open");
+        exit(EXIT_FAILURE);
     }
 
     // Conexión a la memoria compartida existente
@@ -65,18 +61,19 @@ ShareMemory ConnectSHM(int file_size) {
 }
 
 void shm_write(ShareMemory shm_data, char * bufferIn){
-    // sem_wait(shm_data.read_write_sem);  // Espera el semaforo de lectura/escritura
     
     write(shm_data.fd, bufferIn, strlen(bufferIn));
     write(shm_data.fd, "\n", 1);
     msync(shm_data.shm_ptr,shm_data.file_size, MS_SYNC);
-    // sem_post(shm_data.read_write_sem);  // Libera el semaforo de lectura/escritura
-    sem_post(shm_data.content_sem);     // Libera el semaforo de aviso de contenido
+    
+    // Libera el semaforo de aviso de contenido
+    sem_post(shm_data.content_sem);    
 
     return;
 }
 
 void shm_read(ShareMemory shm_data){
+
     char bufferIn[LINE];
     ssize_t bytes_read;
     ssize_t total_bytes_read = 0;
@@ -121,9 +118,7 @@ void safe_ftruncate(int files, off_t length, sem_t * sem){
         perror("ftruncate");
         close(files);
         sem_close(sem);
-        //sem_close(sem2);
         sem_unlink(CONTENT_SEM_NAME);
-        //sem_unlink(READ_WRITE_SEM_NAME);
         exit(EXIT_FAILURE);
     }
 
@@ -137,9 +132,7 @@ int safe_shm_open(const char *name, int oflag, mode_t mode, sem_t * sem){
     if (fd == -1) {
         perror("open");
         sem_close(sem);
-        //sem_close(sem2);
         sem_unlink(CONTENT_SEM_NAME);
-        //sem_unlink(READ_WRITE_SEM_NAME);
         exit(EXIT_FAILURE);
     }
 
@@ -154,9 +147,7 @@ void * safe_mmap(void * addr, size_t length, int prot, int flags, int fd, off_t 
         perror("mmap");
         close(fd);
         sem_close(sem);
-        //sem_close(sem2);
         sem_unlink(CONTENT_SEM_NAME);
-        //sem_unlink(READ_WRITE_SEM_NAME);
         exit(EXIT_FAILURE);
     }
     
@@ -169,9 +160,7 @@ void safe_munmap(void *addr, size_t len, int fd, sem_t *sem){
         perror("munmap");
         close(fd);
         sem_close(sem);
-        // sem_close(sem2);
         sem_unlink(CONTENT_SEM_NAME);
-        // sem_unlink(READ_WRITE_SEM_NAME);
         exit(EXIT_FAILURE);
     }
     

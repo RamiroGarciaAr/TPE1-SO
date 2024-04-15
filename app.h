@@ -8,10 +8,11 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/select.h>
+#include <stdbool.h>
 
-#define INITIAL_FILES_PER_SLAVE 2 
+#define INITIAL_FILES_PER_SLAVE 2
 #define MIN_ARGS_REQUIRED 2
-#define FD_DIM 2    
+#define FD_DIM 2
 #define SLAVES 5
 
 #define FORK_ERROR -1
@@ -32,4 +33,4 @@ void distributeFiles(SlaveData slaves[], char *argv[], int total_files, int numS
 void close_descriptors(SlaveData slave[], size_t slaves);
 
 
-#endif 
+#endif

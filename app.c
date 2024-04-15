@@ -14,11 +14,10 @@ int main(int argc, char * argv[]){
     size_t files_per_slave = ((slaves * INITIAL_FILES_PER_SLAVE) > total_files) ? total_files/slaves : INITIAL_FILES_PER_SLAVE;
     size_t reminding_files = total_files - (slaves * files_per_slave);
     size_t files_read = 0;
-    
+
     //Contiene todos los hash de los archivos
-    int results_dim = LINE * total_files;
+    size_t results_dim = LINE * total_files;
     char resultLine[LINE];
-    //char results[results_dim];
 
     SlaveData slave[slaves];
 
@@ -26,27 +25,29 @@ int main(int argc, char * argv[]){
     FD_ZERO(&readFromSlaves);
 
     int maxFd = 0;
-    
+
     for(int i = 0; i < slaves; i++){
 
         pipe(slave[i].from_App_to_Slave_Pipe);
         pipe(slave[i].from_Slave_to_App_Pipe);
 
         int fd_aux = fork();
-        slave[i].pidNum = fd_aux;   
+        slave[i].pidNum = fd_aux;
 
         //Caso: No se pudo crear el hijo
         if(fd_aux == -1){
             fprintf(stderr, "Child could not be created\n");
             exit(FORK_ERROR);
         }
+
         //Caso: Es el hijo (Slave)
         else if(fd_aux == 0){
+
             //Tanto el extremo de escritura del from_App_to_Slave_Pipe
-            //Como el extremo de lectura de from_Slave_to_App_Pipe, no se usan 
+            //Como el extremo de lectura de from_Slave_to_App_Pipe, no se usan
             close(slave[i].from_App_to_Slave_Pipe[WRITE]);
             close(slave[i].from_Slave_to_App_Pipe[READ]);
-            
+
             //Redirigimos la salida
             dup2(slave[i].from_Slave_to_App_Pipe[WRITE], STDOUT_FILENO);
             close(slave[i].from_Slave_to_App_Pipe[WRITE]);
@@ -58,31 +59,37 @@ int main(int argc, char * argv[]){
             perror("Execve");
             exit(EXIT_FAILURE);
         }
+
         //Caso: Es el padre
         else{
             close(slave[i].from_App_to_Slave_Pipe[READ]);
             close(slave[i].from_Slave_to_App_Pipe[WRITE]);
         }
 
-        
+
         FD_SET(slave[i].from_Slave_to_App_Pipe[READ], &readFromSlaves);
             if (slave[i].from_Slave_to_App_Pipe[READ] > maxFd) {
                 maxFd = slave[i].from_Slave_to_App_Pipe[READ];
             }
     }
-    
+
     FILE * result_file = fopen("resultado.txt", "w");
+
     if (result_file == NULL) {
         perror("fopen");
         exit(EXIT_FAILURE);
     }
 
     ShareMemory shm_data = CreateSHM(results_dim);
-    printf("%d", results_dim); // Imprime el peso de la Shm que necesita view para conectarse
+
+    // Imprime el peso de la Shm que necesita view para conectarse
+    printf("%zu", total_files);
     fflush(stdout);
+    // Esperar 2 segundos a que se conecte
     sleep(2);
 
-    distributeFiles(slave, argv, total_files, slaves, files_per_slave, 0); // Primera distribución de archivos
+    // Primera distribución de archivos
+    distributeFiles(slave, argv, total_files, slaves, files_per_slave, 0);
 
     while (files_read < total_files) {
         fd_set readSet = readFromSlaves;
@@ -125,8 +132,9 @@ void distributeFiles(SlaveData slaves[],char *argv[], int total_files, int numSl
     if(filesSend == 0){
         for (int i = 0; i < numSlaves; i++) {
             for (int j = 0; j < files_per_slave; j++) {
+                // Todos los archivos han sido distribuidos
                 if (filesSend >= total_files) {
-                    return; // Todos los archivos han sido distribuidos
+                    return;
                 }
                 write(slaves[i].from_App_to_Slave_Pipe[WRITE], argv[filesSend + 1], strlen(argv[filesSend + 1]));
                 write(slaves[i].from_App_to_Slave_Pipe[WRITE], "\n", 1);
@@ -145,12 +153,14 @@ void distributeFiles(SlaveData slaves[],char *argv[], int total_files, int numSl
 
 void close_descriptors(SlaveData slave[], size_t slaves){
 
-    for(int i = 0; i < slaves; i++){
-        for(int j = 0; j < FD_DIM; j++){
-            close(slave[i].from_App_to_Slave_Pipe[j]);
+    for(int i = 0; i < slaves; i++) {
+        for(int j = 0; j < FD_DIM; j++) {
+            if(!(j == 0)){
+                if(!(i>0 && j==1))
+                close(slave[i].from_App_to_Slave_Pipe[j]);
+            }
             close(slave[i].from_Slave_to_App_Pipe[j]);
         }
     }
-
     return;
 }

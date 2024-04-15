@@ -2,6 +2,6 @@
 #define VIEW_H
 
 #define LINE 100
-#define INPUT_SIZE 5
+#define INPUT_SIZE 10
 
 #endif

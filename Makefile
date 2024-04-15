@@ -3,7 +3,7 @@ CFLAGS = -Wall
 all: app slave view
 
 app: app.c shm.h
-	$(CC) $(CFLAGS) -std=c99 -o app app.c shm.c -lrt -pthread -D_XOPEN_SOURCE=500 
+	$(CC) $(CFLAGS) -std=c99 -fsanitize=address -g -o app app.c shm.c -lrt -pthread -D_XOPEN_SOURCE=500 
 
 slave: slave.c
 	$(CC) $(CFLAGS) -o slave slave.c slave.h

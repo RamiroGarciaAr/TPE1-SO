@@ -24,15 +24,13 @@ typedef struct{
     char *shm_name;
     char *shm_ptr;
     int fd;
-    
-    int file_size;
-
+    size_t file_size;
     sem_t *content_sem;
 
 }ShareMemory;
 
-ShareMemory CreateSHM(int file_size);
-ShareMemory ConnectSHM(int file_size);
+ShareMemory CreateSHM(size_t file_size);
+ShareMemory ConnectSHM(size_t file_size);
 sem_t * safe_sem_open(const char *name, int oflag, mode_t mode, unsigned int value);
 void safe_ftruncate(int files, off_t length, sem_t * sem);
 int safe_shm_open(const char *name, int oflag, mode_t mode, sem_t * sem);
