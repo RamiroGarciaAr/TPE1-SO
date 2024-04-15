@@ -40,6 +40,7 @@ void shm_read(ShareMemory shm_data);
 void safe_munmap(void *addr, size_t len, int fd, sem_t * sem);
 void close_shm(ShareMemory shm_data);
 void destroy_shm(ShareMemory shm_data);
+void safe_close(int fd);
 
 
 #endif

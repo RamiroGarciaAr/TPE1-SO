@@ -32,5 +32,7 @@ void distributeFiles(SlaveData slaves[], char *argv[], int total_files, int numS
 
 void close_descriptors(SlaveData slave[], size_t slaves);
 
+void safe_dup2(int old_fd, int new_fd);
+
 
 #endif

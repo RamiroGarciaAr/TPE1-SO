@@ -236,3 +236,148 @@ which lsof
 exit
 cd root
 exit
+cd root
+clear
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+clear
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+rm view
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+clear
+rm view
+make
+./app Textos/*  
+strace
+strace 
+strace ./app Textos/*
+clear
+strace ./app Textos/* 
+ls
+rm app 
+clear
+make
+strace ./app Textos/*
+rm app
+clear
+strace ./app Textos/*
+make
+strace ./app Textos/*
+clear
+pvs-studio-analyzer trace -- make
+rm app 
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+clear
+rm app
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+strace ./app Textos/*
+clear
+ls
+ls
+rm app
+ls
+make
+./app Textos/* | ./view
+clear
+rm app
+rm view
+make
+rm app
+rm view
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+clear
+ls
+clear
+rm view
+rm app
+make
+./app Texto20
+ls
+cd Textos
+ls
+cd ..
+ls
+./app Textos/*
+./app Textos/* | ./view
+clear
+rm app view
+make
+./app Textos/* | ./view
+clear
+rm view app
+make
+./app Textos/* | ./view
+clear
+rm view app
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+clear
+find . -name "*.c" | while read line; do sed -i '1s/^\(.*\)$/\/\/ This is a personal academic project. Dear PVS-Studio, please check it.\n\1/' "$line"; done
+find . -name "*.c" | while read line; do sed -i '2s/^\(.*\)$/\/\/ PVS-Studio Static Code Analyzer for C, C++ and C#: http:\/\/www.viva64.com\n\1/' "$line"; done
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+clear
+rm view app
+make
+./app Textos/* | ./view
+clear
+rm view app
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+clear
+rm app view
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+clear
+rm view app
+make
+./app Textos/* | ./view
+clear
+strace ./app Textos/* | ./view
+strace ./app Textos/* 
+rm view app
+make
+strace ./app Textos/* 
+strace ./app Textos/* 
+clear
+clear
+cd root
+ls
+make 
+./app Textos/* | ./view
+./app Textos/* &
+
+./app Textos/* &
+clear
+./app Textos/* &
+./ view 16
+./view 16
+./app Textos/* &
+./view 16
+clear
+./app Textos/* &
+./view 126
+./view 16
+./app Textos/* &
+./view 16
+clear
+pvs-studio-analyzer trace -- make
+rm app view
+pvs-studio-analyzer trace -- make
+pvs-studio-analyzer analyze
+plog-converter -a '64:1,2,3;GA:1,2,3;OP:1,2,3' -t tasklist -o report.tasks PVS-Studio.log
+clear
+exit

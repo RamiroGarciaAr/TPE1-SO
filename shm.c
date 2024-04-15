@@ -49,7 +49,7 @@ ShareMemory ConnectSHM(size_t file_size) {
     char *ptr = mmap(NULL, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (ptr == MAP_FAILED) {
         perror("mmap");
-        close(fd);
+        safe_close(fd);
         sem_close(content_sem);
         exit(EXIT_FAILURE);
     }
@@ -118,7 +118,7 @@ void safe_ftruncate(int files, off_t length, sem_t * sem){
 
     if (ftruncate(files, length) == -1) {
         perror("ftruncate");
-        close(files);
+        safe_close(files);
         sem_close(sem);
         sem_unlink(CONTENT_SEM_NAME);
         exit(EXIT_FAILURE);
@@ -147,7 +147,7 @@ void * safe_mmap(void * addr, size_t length, int prot, int flags, int fd, off_t 
     
     if (ptr == MAP_FAILED) {
         perror("mmap");
-        close(fd);
+        safe_close(fd);
         sem_close(sem);
         sem_unlink(CONTENT_SEM_NAME);
         exit(EXIT_FAILURE);
@@ -160,7 +160,7 @@ void safe_munmap(void *addr, size_t len, int fd, sem_t *sem){
 
     if (munmap(addr, len) == -1) {
         perror("munmap");
-        close(fd);
+        safe_close(fd);
         sem_close(sem);
         sem_unlink(CONTENT_SEM_NAME);
         exit(EXIT_FAILURE);
@@ -180,4 +180,12 @@ void destroy_shm(ShareMemory shm_data){
     sem_unlink(CONTENT_SEM_NAME);
     //close(shm_data.fd);
     shm_unlink(SHM_NAME);
+}
+
+void safe_close(int fd){
+
+    if(close(fd) == -1){
+        perror("close");
+        exit(EXIT_FAILURE);
+    }
 }

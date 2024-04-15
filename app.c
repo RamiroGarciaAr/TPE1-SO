@@ -47,14 +47,14 @@ int main(int argc, char * argv[]){
 
             //Tanto el extremo de escritura del from_App_to_Slave_Pipe
             //Como el extremo de lectura de from_Slave_to_App_Pipe, no se usan
-            close(slave[i].from_App_to_Slave_Pipe[WRITE]);
-            close(slave[i].from_Slave_to_App_Pipe[READ]);
+            safe_close(slave[i].from_App_to_Slave_Pipe[WRITE]);
+            safe_close(slave[i].from_Slave_to_App_Pipe[READ]);
 
             //Redirigimos la salida
-            dup2(slave[i].from_Slave_to_App_Pipe[WRITE], STDOUT_FILENO);
-            close(slave[i].from_Slave_to_App_Pipe[WRITE]);
-            dup2(slave[i].from_App_to_Slave_Pipe[READ], STDIN_FILENO);
-            close(slave[i].from_App_to_Slave_Pipe[READ]);
+            safe_dup2(slave[i].from_Slave_to_App_Pipe[WRITE], STDOUT_FILENO);
+            safe_close(slave[i].from_Slave_to_App_Pipe[WRITE]);
+            safe_dup2(slave[i].from_App_to_Slave_Pipe[READ], STDIN_FILENO);
+            safe_close(slave[i].from_App_to_Slave_Pipe[READ]);
             execve("./slave", argv, NULL);
 
             //En caso de que no se haya realizado el exceve por error
@@ -64,8 +64,8 @@ int main(int argc, char * argv[]){
 
         //Caso: Es el padre
         else{
-            close(slave[i].from_App_to_Slave_Pipe[READ]);
-            close(slave[i].from_Slave_to_App_Pipe[WRITE]);
+            safe_close(slave[i].from_App_to_Slave_Pipe[READ]);
+            safe_close(slave[i].from_Slave_to_App_Pipe[WRITE]);
         }
 
 
@@ -157,10 +157,18 @@ void close_descriptors(SlaveData slave[], size_t slaves){
     for(int i = 0; i < slaves; i++) {
         for(int j = 0; j < FD_DIM; j++) {
             if(i <= 0 && j != 0 ){
-                close(slave[i].from_App_to_Slave_Pipe[j]);
+                safe_close(slave[i].from_App_to_Slave_Pipe[j]);
             }
-            close(slave[i].from_Slave_to_App_Pipe[j]);
+            safe_close(slave[i].from_Slave_to_App_Pipe[j]);
         }
     }
     return;
+}
+
+void safe_dup2(int old_fd, int new_fd){
+
+    if(dup2(old_fd, new_fd) == -1){
+        perror("dup2");
+        exit(EXIT_FAILURE);
+    }
 }
