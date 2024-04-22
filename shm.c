@@ -1,7 +1,7 @@
 // This is a personal academic project. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include "shm.h"
-
+//Creamos wrappers para garantizar la seguridad
 ShareMemory CreateSHM(size_t file_size) {
 
     ShareMemory shm_data;
@@ -13,7 +13,7 @@ ShareMemory CreateSHM(size_t file_size) {
     int fd = safe_shm_open(SHM_NAME, O_RDWR | O_CREAT, SHM_MODE, content_sem);
 
     // Truncar el archivo al tamano deseado
-    safe_ftruncate(fd, file_size,content_sem);
+    safe_ftruncate(fd, file_size, content_sem);
 
     // Mapear el archivo a la memoria
     char *ptr = safe_mmap(NULL, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0, content_sem);

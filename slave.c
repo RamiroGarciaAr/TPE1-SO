@@ -13,10 +13,10 @@ int main() {
             inputBuffer[nbytes - 1] = '\0';
         }
 
-        char * token = strtok(inputBuffer, "\n");  // Dividir la entrada en tokens por saltos de línea
+        char * token = strtok(inputBuffer, "\n");  
 
         while (token != NULL) {
-            char ansBuffer[MD5_RESULT_SIZE] = "";  // Buffer para almacenar el resultado MD5
+            char ansBuffer[MD5_RESULT_SIZE] = "";  
             if (calculateMd5(token, ansBuffer) == 0) {
                 size_t output_dim = write(STDOUT_FILENO, ansBuffer, strlen(ansBuffer));
                 if (output_dim == -1) {
@@ -51,11 +51,14 @@ int calculateMd5(char *filePath, char *ansBuffer) {
     char buffer[BUFFER_SIZE];
     size_t bytesRead = 0;
 
-    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) { // Vamos leyendo linea por linea
+        
         // Append the MD5 and filename to the ansBuffer
         strcat(ansBuffer, mypid);
         strcat(ansBuffer, "-");
-        strcat(ansBuffer, buffer);
+        strcat(ansBuffer, buffer); //Hash y dir
+
+        // pid - 12809182389173978918 Textos/texto1.txt
 
         // Reset the buffer
         memset(buffer, 0, sizeof(buffer));

@@ -12,42 +12,54 @@ int main(int argc, char * argv[]){
 
     //Calculamos cantidad de archivos por esclavo y archivos restantes INICIALES
     size_t total_files = argc - 1;
-    size_t slaves = (SLAVES > total_files) ? total_files : SLAVES;
+    size_t slaves = (SLAVES > total_files) ? total_files : SLAVES; //(I)
     size_t files_per_slave = ((slaves * INITIAL_FILES_PER_SLAVE) > total_files) ? total_files/slaves : INITIAL_FILES_PER_SLAVE;
     size_t reminding_files = total_files - (slaves * files_per_slave);
     size_t files_read = 0;
 
-    //Contiene todos los hash de los archivos
-    size_t results_dim = LINE * total_files;
-    char resultLine[LINE];
+    //Contiene todos los hash de los archivos 
+    size_t results_dim = LINE * total_files;  // Tamaño de buffer total para la share memory
+    char resultLine[LINE];                    // (HASH - PID - DIR)
 
-    SlaveData slave[slaves];
+    SlaveData slave[slaves];                  // Vector de esclavos (Tamaño dado por I)
 
-    fd_set readFromSlaves;
-    FD_ZERO(&readFromSlaves);
+    fd_set readFromSlaves;                    // Definimos los FD (File descriptors)
+    FD_ZERO(&readFromSlaves);                 // Seteamos los FD
 
     int maxFd = 0;
 
     for(int i = 0; i < slaves; i++){
 
-        pipe(slave[i].from_App_to_Slave_Pipe);
-        pipe(slave[i].from_Slave_to_App_Pipe);
+        pipe(slave[i].from_App_to_Slave_Pipe); // Creamos los Pipes para la comunicacion de la App al Slave
+        pipe(slave[i].from_Slave_to_App_Pipe); // Creamos los Pipes para la comunicacion de la Slave al App
+        
 
-        int fd_aux = fork();
-        slave[i].pidNum = fd_aux;
+
+        int fd_aux = fork();      
+        slave[i].pidNum = fd_aux;              
 
         //Caso: No se pudo crear el hijo
         if(fd_aux == -1){
             fprintf(stderr, "Child could not be created\n");
-            exit(FORK_ERROR);
+            exit(FORK_ERROR); 
         }
 
         //Caso: Es el hijo (Slave)
+        //lee lo que le manda el app
+        //El hijo procesa la informacion y devuelve el hash a la app
         else if(fd_aux == 0){
+            
+            //Slave lee datos de la app
+            //Cerramos file descriptors acumulados
+            for(int j = 0; j < i; j++)
+            {
+                safe_close(slave[j].from_Slave_to_App_Pipe[READ]);
+                safe_close(slave[j].from_App_to_Slave_Pipe[WRITE]);
+            }
 
             //Tanto el extremo de escritura del from_App_to_Slave_Pipe
             //Como el extremo de lectura de from_Slave_to_App_Pipe, no se usan
-            safe_close(slave[i].from_App_to_Slave_Pipe[WRITE]);
+            safe_close(slave[i].from_App_to_Slave_Pipe[WRITE]); //Cerramos los FD inecesarios
             safe_close(slave[i].from_Slave_to_App_Pipe[READ]);
 
             //Redirigimos la salida
@@ -55,6 +67,7 @@ int main(int argc, char * argv[]){
             safe_close(slave[i].from_Slave_to_App_Pipe[WRITE]);
             safe_dup2(slave[i].from_App_to_Slave_Pipe[READ], STDIN_FILENO);
             safe_close(slave[i].from_App_to_Slave_Pipe[READ]);
+            
             execve("./slave", argv, NULL);
 
             //En caso de que no se haya realizado el exceve por error
@@ -68,7 +81,8 @@ int main(int argc, char * argv[]){
             safe_close(slave[i].from_Slave_to_App_Pipe[WRITE]);
         }
 
-
+        //Acumulamos los file descriptors de lectura que se van a utilizar para el select
+        //Seteamos el maximo fd xq se ocupa del select
         FD_SET(slave[i].from_Slave_to_App_Pipe[READ], &readFromSlaves);
             if (slave[i].from_Slave_to_App_Pipe[READ] > maxFd) {
                 maxFd = slave[i].from_Slave_to_App_Pipe[READ];
@@ -87,11 +101,12 @@ int main(int argc, char * argv[]){
     // Imprime el peso de la Shm que necesita view para conectarse
     printf("%zu", total_files);
     fflush(stdout);
-    // Esperar 2 segundos a que se conecte
+    // Esperar 2 segundos a que se conecte el proceso vista
     sleep(2);
 
     // Primera distribución de archivos
     distributeFiles(slave, argv, total_files, slaves, files_per_slave, 0);
+   
 
     while (files_read < total_files) {
         fd_set readSet = readFromSlaves;
